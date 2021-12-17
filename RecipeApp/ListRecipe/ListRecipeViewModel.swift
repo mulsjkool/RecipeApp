@@ -16,6 +16,7 @@ class ListRecipeViewModel: ViewModelType {
         
         let data = [Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "D82D40"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "90AF17"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "2DBBD8"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "D82D40"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "90AF17"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "2DBBD8"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "D82D40"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "90AF17"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "2DBBD8"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "D82D40"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "90AF17"), Recipe(id: "1", name: "Pizza", desc: "Pizza description", image: "cook_new", backgroundColor: "2DBBD8")]
         
+        
         let recipes = input.loadTrigger.flatMapLatest({ _ -> Driver<[Recipe]> in
             return .just(data)
         })
