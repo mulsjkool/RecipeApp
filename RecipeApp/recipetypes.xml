@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Categories>
+   <Type>
+      <id>1</id>
+      <name>Breakfast</name>
+   </Type>
+   <Type>
+      <id>2</id>
+      <name>Lunch</name>
+   </Type>
+   <Type>
+      <id>3</id>
+      <name>Soups</name>
+   </Type>
+   <Type>
+      <id>4</id>
+      <name>Salads</name>
+   </Type>
+</Categories>

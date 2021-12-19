@@ -12,11 +12,19 @@ import RxCocoa
 class ListRecipeViewController: UIViewController {
     
     @IBOutlet weak var collectionView: UICollectionView!
+    @IBOutlet weak var pickerStackView: UIStackView!
+    @IBOutlet weak var pickerView: UIPickerView!
+    @IBOutlet weak var selectButton: UIButton!
+    
     private let cellIdentifier = "ListRecipeCell"
     
     private let viewModel: ListRecipeViewModel
     
     private let disposeBag = DisposeBag()
+    
+    private var filterRecipePublishSubject = PublishSubject<Void>()
+    
+    private var addRecipePublishSubject = PublishSubject<Void>()
     
     init(viewModel: ListRecipeViewModel) {
         self.viewModel = viewModel
@@ -33,9 +41,12 @@ class ListRecipeViewController: UIViewController {
         
         view.backgroundColor = .white
         setupCollectionView()
+        setFilterButton()
         setAddButton()
         setLogoView()
         bindViewModel()
+        
+        pickerStackView.isHidden = true
     }
     
     private func bindViewModel() {
@@ -44,17 +55,30 @@ class ListRecipeViewController: UIViewController {
             .mapToVoid()
             .asDriverOnErrorJustComplete()
         
-        let input = ListRecipeViewModel.Input(loadTrigger: loadTrigger)
+        let selectCategory = selectButton.rx.tap.withLatestFrom(pickerView.rx.itemSelected).flatMapLatest { row, _ -> Driver<Int> in
+            self.filterRecipe()
+            return Driver.just(row)
+        }.asDriverOnErrorJustComplete()
+
+        
+        let input = ListRecipeViewModel.Input(loadTrigger: loadTrigger, selection: collectionView.rx.itemSelected.asDriver(), selectCategory: selectCategory, createRecipe: addRecipePublishSubject.asDriverOnErrorJustComplete())
+        
         let output = viewModel.transform(input: input)
         
         disposeBag.addDisposables([
-            output.recipes.drive(onNext: { _ in
-                self.collectionView.reloadData()
-            }),
             
             output.recipes.drive(collectionView.rx.items(cellIdentifier: cellIdentifier, cellType: ListRecipeCell.self)) { _, recipe, cell in
                 cell.bind(recipe: recipe)
-            }
+            },
+            
+            output.categories.asObservable().bind(to: self.pickerView.rx.itemTitles) { _, element in
+                return element.name
+            },
+            
+            output.selectedRecipe.drive(),
+            
+            output.createRecipe.drive()
+                        
         ])
     }
     
@@ -87,6 +111,20 @@ class ListRecipeViewController: UIViewController {
         self.navigationItem.rightBarButtonItem = rightBarButtonItem
     }
     
+    private func setFilterButton() {
+        
+        let button = UIButton(type: .custom)
+        button.setImage(UIImage(named: "ic_filter"), for: .normal)
+        button.tintColor = .black
+        button.addTarget(self, action: #selector(filterRecipe), for: .touchUpInside)
+        button.contentMode = .scaleAspectFit
+        button.clipsToBounds = true
+        let leftBarButtonItem = UIBarButtonItem(customView: button)
+
+        self.navigationItem.leftBarButtonItem = leftBarButtonItem
+    }
+
+    
     private func setupCollectionView() {
         let nib = UINib(nibName: cellIdentifier, bundle: Bundle(for: ListRecipeCell.self))
         collectionView.register(nib, forCellWithReuseIdentifier: cellIdentifier)
@@ -95,7 +133,11 @@ class ListRecipeViewController: UIViewController {
     }
     
     @objc private func addRecipe() {
-        
+        addRecipePublishSubject.onNext(())
+    }
+    
+    @objc private func filterRecipe() {
+        pickerStackView.isHidden = !pickerStackView.isHidden
     }
 }
 

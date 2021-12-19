@@ -22,8 +22,8 @@ class ListRecipeCell: UICollectionViewCell {
     }
 
     func bind(recipe: Recipe) {
-        containerView.backgroundColor = UIColor(hexString: recipe.backgroundColor)
-        recipeImageView.image = UIImage(named: recipe.image)
+        containerView.backgroundColor = UIColor(hexString: "90AF17")
+        recipeImageView.image = UIImage(data: recipe.image)
         recipeNameLabel.text = recipe.name
         recipeDescriptionLabel.text = recipe.desc
     }

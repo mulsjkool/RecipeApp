@@ -7,6 +7,7 @@
 
 import UIKit
 import CoreData
+import IQKeyboardManagerSwift
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -17,11 +18,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // Override point for customization after application launch.
         
         window = UIWindow(frame: UIScreen.main.bounds)
-        let controller = ListRecipeViewController(viewModel: ListRecipeViewModel())
-        let navigation = BaseNavigationController(rootViewController: controller)
+        
+        let navigation = BaseNavigationController()
+        let navigator = ListRecipeNavigator(navigation: navigation)
+        let controller = ListRecipeViewController(viewModel: ListRecipeViewModel(navigator: navigator))
+        navigation.viewControllers = [controller]
         window?.rootViewController = navigation
         window?.makeKeyAndVisible()
 
+        IQKeyboardManager.shared.enable = true
         return true
     }
 

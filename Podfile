@@ -9,7 +9,8 @@ target 'RecipeApp' do
 
     pod 'RxSwift', '6.2.0'
     pod 'RxCocoa', '6.2.0'
-    pod "SwiftyXMLParser", :git => 'https://github.com/yahoojapan/SwiftyXMLParser.git'
+    pod 'AEXML'
+    pod 'IQKeyboardManagerSwift'
 
   target 'RecipeAppTests' do
     inherit! :search_paths
