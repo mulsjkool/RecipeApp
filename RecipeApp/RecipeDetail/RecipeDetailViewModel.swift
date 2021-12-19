@@ -185,6 +185,8 @@ class RecipeDetailViewModel: ViewModelType {
                 for object in recipes {
                     context.delete(object)
                 }
+                
+                try context.save()
                 return true
             }
         } catch {
