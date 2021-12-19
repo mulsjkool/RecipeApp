@@ -2,7 +2,7 @@
 //  RecipeDetailViewModel.swift
 //  RecipeApp
 //
-//  Created by Chinh IT. Phung Van on 19/12/2021.
+//  Created by Tung Phan on 19/12/2021.
 //
 
 import Foundation
@@ -24,12 +24,22 @@ class RecipeDetailViewModel: ViewModelType {
         let categories = input.loadTrigger.flatMapLatest {
             return Driver.just(self.categories)
         }
-
+        
+        let defaultCategory = input.loadTrigger.flatMapLatest { _ -> Driver<Category> in
+            if let category = self.categories.first(where: { self.recipe.category == $0.id }) {
+                return Driver.just(category)
+            } else {
+                return Driver.empty()
+            }
+        }
+        
         let selectedCategory = input.selectCategory.withLatestFrom(categories, resultSelector: { index, categories in
             return categories[index]
         })
 
-        let nameAndDesc = Driver.combineLatest(input.name, input.desc, input.image, selectedCategory)
+        let image = Driver.merge(Driver.just(UIImage(data: recipe.image) ?? UIImage()), input.image)
+        
+        let nameAndDesc = Driver.combineLatest(input.name, input.desc, image, Driver.merge(defaultCategory, selectedCategory))
         let recipe = Driver.combineLatest(Driver.just(self.recipe), nameAndDesc) { (recipe, nameAndDesc) -> Recipe in
             recipe.name = nameAndDesc.0
             recipe.desc = nameAndDesc.1
@@ -45,18 +55,32 @@ class RecipeDetailViewModel: ViewModelType {
         
         let save = input.saveTrigger.withLatestFrom(recipe)
             .flatMapLatest { recipe -> Driver<Recipe> in
-                if self.save(recipe: recipe) {
-                    return Driver.just(recipe)
+                
+                if recipe.id.isEmpty {
+                    if self.save(recipe: recipe) {
+                        return Driver.just(recipe)
+                    } else {
+                        return Driver.empty()
+                    }
                 } else {
-                    return Driver.empty()
+                    if self.update(recipe: recipe) {
+                        return Driver.just(recipe)
+                    } else {
+                        return Driver.empty()
+                    }
                 }
             }
         
-        let delete = input.deleteTrigger.withLatestFrom(recipe).flatMapLatest { recipe in
-            return Driver.just(recipe)
+        let delete = input.deleteTrigger.withLatestFrom(recipe).flatMapLatest { recipe -> Driver<Recipe> in
+            
+            if self.delete(recipe: recipe) {
+                return Driver.just(recipe)
+            } else {
+                return Driver.empty()
+            }
         }
                         
-        return Output(recipe: recipe, save: save, delete: delete, categories: categories, selectedCategory: selectedCategory)
+        return Output(recipe: recipe, save: save, delete: delete, categories: categories, selectedCategory: Driver.merge(defaultCategory, selectedCategory))
     }
     
     func save(recipe: Recipe) -> Bool {
@@ -77,10 +101,10 @@ class RecipeDetailViewModel: ViewModelType {
       
       let object = NSManagedObject(entity: entity,
                                    insertInto: managedContext)
-      
+
       // 3
         if recipe.id.isEmpty {
-            object.setValue(UUID(), forKeyPath: "id")
+            object.setValue(UUID().uuidString, forKeyPath: "id")
         }
         
         object.setValue(recipe.name, forKeyPath: "name")
@@ -97,6 +121,76 @@ class RecipeDetailViewModel: ViewModelType {
         print("Could not save. \(error), \(error.userInfo)")
           return false
       }
+    }
+    
+    func update(recipe: Recipe) -> Bool {
+        
+        guard let appDelegate =
+                UIApplication.shared.delegate as? AppDelegate else {
+                    return false
+                }
+        
+        // 1
+        let context =
+        appDelegate.persistentContainer.viewContext
+        
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "RecipeEntity")
+        
+        fetchRequest.predicate = NSPredicate(format: "id = %@", recipe.id)
+        
+        do {
+            let results = try context.fetch(fetchRequest) as? [NSManagedObject]
+            if let recipes = results, !recipes.isEmpty {
+                
+                recipes[0].setValue(recipe.name, forKeyPath: "name")
+                recipes[0].setValue(recipe.desc, forKeyPath: "desc")
+                recipes[0].setValue(recipe.image, forKeyPath: "image")
+                recipes[0].setValue(recipe.category, forKeyPath: "category")
+                
+                do {
+                    try context.save()
+                    return true
+                }
+                catch {
+                    print("Saving Core Data Failed: \(error)")
+                    
+                }
+                
+            }
+        } catch {
+            print("Fetch Failed: \(error)")
+            
+        }
+        return false
+    }
+    
+    private func delete(recipe: Recipe) -> Bool {
+        
+        guard let appDelegate =
+                UIApplication.shared.delegate as? AppDelegate else {
+                    return false
+                }
+        
+        // 1
+        let context =
+        appDelegate.persistentContainer.viewContext
+        
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "RecipeEntity")
+        
+        fetchRequest.predicate = NSPredicate(format: "id = %@", recipe.id)
+        
+        do {
+            let results = try context.fetch(fetchRequest) as? [NSManagedObject]
+            if let recipes = results, !recipes.isEmpty {
+                for object in recipes {
+                    context.delete(object)
+                }
+                return true
+            }
+        } catch {
+            print("Fetch Failed: \(error)")
+        }
+        return false
     }
 }
 

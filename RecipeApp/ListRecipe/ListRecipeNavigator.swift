@@ -2,7 +2,7 @@
 //  ListRecipeNavigator.swift
 //  RecipeApp
 //
-//  Created by Chinh IT. Phung Van on 19/12/2021.
+//  Created by Tung Phan on 19/12/2021.
 //
 
 import Foundation
@@ -23,19 +23,19 @@ class ListRecipeNavigator {
         self.navigation = navigation
     }
     
-    func goRecipeDetail(_ recipe: Recipe, categories: [Category]) -> Driver<Recipe> {
+    func goRecipeDetail(_ recipe: Recipe, categories: [Category]) -> Driver<RecipeState> {
         
-        let publishSubject = PublishSubject<Recipe>()
+        let publishSubject = PublishSubject<RecipeState>()
         let viewModel = RecipeDetailViewModel(recipe: recipe, categories: categories)
         let detailVc = RecipeDetailViewController(viewModel: viewModel)
         detailVc.saveCompletion = { [weak self] item in
-            publishSubject.onNext(item)
+            publishSubject.onNext(.update(item))
             
             self?.navigation.popViewController(animated: true)
         }
         
         detailVc.deletedCompletion = { [weak self] item in
-            publishSubject.onNext(item)
+            publishSubject.onNext(.delete(item))
             self?.navigation.popViewController(animated: true)
         }
 
@@ -55,11 +55,6 @@ class ListRecipeNavigator {
             self?.navigation.popViewController(animated: true)
         }
         
-        detailVc.deletedCompletion = { [weak self] item in
-            publishSubject.onNext(item)
-            self?.navigation.popViewController(animated: true)
-        }
-
         navigation.pushViewController(detailVc, animated: true)
         
         return publishSubject.asDriverOnErrorJustComplete()

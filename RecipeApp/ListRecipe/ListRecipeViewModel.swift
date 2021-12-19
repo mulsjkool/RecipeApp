@@ -2,7 +2,7 @@
 //  ListRecipeViewModel.swift
 //  RecipeApp
 //
-//  Created by Phùng Chịnh on 17/12/2021.
+//  Created by Tung Phan on 17/12/2021.
 //
 
 import Foundation
@@ -31,7 +31,7 @@ class ListRecipeViewModel: ViewModelType {
         let allRecipes = input.loadTrigger.flatMapLatest { _ -> Driver<[Recipe]> in
             let data = self.fetchRecipes()
                 .map { entity in
-                    return Recipe(id: entity.id?.uuidString ?? "", name: entity.name ?? "", desc: entity.desc ?? "", image: entity.image ?? Data())
+                    return Recipe(id: entity.id ?? "", name: entity.name ?? "", desc: entity.desc ?? "", image: entity.image ?? Data(), category: entity.category ?? "")
                 }
             return Driver.just(data)
         }
@@ -40,28 +40,51 @@ class ListRecipeViewModel: ViewModelType {
             return categories[index]
         })
             .flatMapLatest({ category -> Driver<[Recipe]> in
-            let data = self.fetchRecipes(category)
+                let data = self.fetchRecipes(category)
                     .map { entity in
-                        return Recipe(id: entity.id?.uuidString ?? "", name: entity.name ?? "", desc: entity.desc ?? "", image: entity.image ?? Data())
+                        return Recipe(id: entity.id ?? "", name: entity.name ?? "", desc: entity.desc ?? "", image: entity.image ?? Data(), category: entity.category ?? "")
                     }
-            return .just(data)
+                return .just(data)
+            })
+        
+        let selectedRecipe = input.selection.withLatestFrom(categories) { (indexPath, categories) -> (Recipe, [Category]) in
+            return (self.recipes[indexPath.row], categories)
+        }.flatMapLatest { tuple -> Driver<RecipeState> in
+            return self.navigator.goRecipeDetail(tuple.0, categories: tuple.1)
+        }.flatMapLatest { state -> Driver<Recipe> in
+            switch state {
+            case .update(let recipe):
+                if let index = self.recipes.firstIndex(of: recipe) {
+                    self.recipes[index] = recipe
+                }
+                return .just(recipe)
+            case .delete(let recipe):
+                if let index = self.recipes.firstIndex(of: recipe) {
+                    self.recipes.remove(at: index)
+                }
+                return .just(recipe)
+            }
+        }
+        
+        let createRecipe = input.createRecipe.withLatestFrom(categories).flatMapLatest { categories in
+            self.navigator.goCreateRecipe(categories: categories)
+        }.flatMapLatest({ item -> Driver<Recipe> in
+            self.recipes.append(item)
+            return Driver.just(item)
         })
         
-        let recipes = Driver.merge(allRecipes, filterRecipes)
-        
-        let recipesAndCategories = Driver.combineLatest(recipes, categories)
-            let selectedRecipe = input.selection.withLatestFrom(recipesAndCategories) { (indexPath, recipesAndCategories) -> (Recipe, [Category]) in
-                return (recipesAndCategories.0[indexPath.row], recipesAndCategories.1)
-            }.flatMapLatest {
-                return self.navigator.goRecipeDetail($0.0, categories: $0.1)
+        let updateRecipes = Driver.merge(selectedRecipe, createRecipe)
+            .flatMapLatest { _ -> Driver<[Recipe]> in
+                return Driver.just(self.recipes)
             }
-            
-            let createRecipe = input.createRecipe.withLatestFrom(categories).flatMapLatest { categories in
-                self.navigator.goCreateRecipe(categories: categories)
-            }.mapToVoid()
         
-            return Output(recipes: recipes, selectedRecipe: selectedRecipe, categories: categories, createRecipe: createRecipe)
-    }
+        let recipes = Driver.merge(allRecipes, filterRecipes, updateRecipes)
+            .do(onNext: {
+                self.recipes = $0
+            })
+                
+                return Output(recipes: recipes, categories: categories)
+                }
     
     private func fetchRecipes(_ category: Category? = nil) -> [RecipeEntity] {
         
@@ -127,8 +150,8 @@ extension ListRecipeViewModel {
     
     struct Output {
         let recipes: Driver<[Recipe]>
-        let selectedRecipe: Driver<Recipe>
+//        let selectedRecipe: Driver<Recipe>
         let categories: Driver<[Category]>
-        let createRecipe: Driver<Void>
+//        let createRecipe: Driver<Void>
     }
 }

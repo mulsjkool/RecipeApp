@@ -2,7 +2,7 @@
 //  RecipeEntity+CoreDataProperties.swift
 //  
 //
-//  Created by Chinh IT. Phung Van on 19/12/2021.
+//  Created by Tung Phan on 19/12/2021.
 //
 //
 
@@ -17,7 +17,7 @@ extension RecipeEntity {
     }
 
     @NSManaged public var desc: String?
-    @NSManaged public var id: UUID?
+    @NSManaged public var id: String?
     @NSManaged public var image: Data?
     @NSManaged public var name: String?
     @NSManaged public var category: String?

@@ -2,7 +2,7 @@
 //  ListRecipeViewController.swift
 //  RecipeApp
 //
-//  Created by Phùng Chịnh on 17/12/2021.
+//  Created by Tung Phan on 17/12/2021.
 //
 
 import UIKit
@@ -75,9 +75,11 @@ class ListRecipeViewController: UIViewController {
                 return element.name
             },
             
-            output.selectedRecipe.drive(),
+//            output.selectedRecipe.drive(onNext: { _ in
+//                self.collectionView.reloadData()
+//            }),
             
-            output.createRecipe.drive()
+//            output.createRecipe.drive()
                         
         ])
     }

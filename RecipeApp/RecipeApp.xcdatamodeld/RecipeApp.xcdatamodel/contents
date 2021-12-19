@@ -3,7 +3,7 @@
     <entity name="RecipeEntity" representedClassName=".RecipeEntity" syncable="YES">
         <attribute name="category" optional="YES" attributeType="String"/>
         <attribute name="desc" optional="YES" attributeType="String"/>
-        <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="id" optional="YES" attributeType="String"/>
         <attribute name="image" optional="YES" attributeType="Binary"/>
         <attribute name="name" optional="YES" attributeType="String"/>
     </entity>
