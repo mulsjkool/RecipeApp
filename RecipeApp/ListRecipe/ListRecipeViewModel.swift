@@ -14,25 +14,22 @@ class ListRecipeViewModel: ViewModelType {
     
     private(set) var recipes = [Recipe]()
     private let navigator: ListRecipeNavigator
-    let persistentContainer: NSPersistentContainer
+    private let useCase: ListRecipeUseCase
     
-    init(navigator: ListRecipeNavigator) {
+    init(navigator: ListRecipeNavigator, useCase: ListRecipeUseCase) {
         self.navigator = navigator
-        persistentContainer = NSPersistentContainer(name: "RecipeApp")
+        self.useCase = useCase
     }
     
     func transform(input: Input) -> Output {
         
-        let categories = input.loadTrigger.flatMapLatest { _ -> Driver<[Category]> in
-            let data = self.fetchCategoriesFromXmlFile()
+        let categories = input.loadTrigger.flatMapLatest { _ -> Driver<[RecipeCategory]> in
+            let data = self.useCase.fetchCategoriesFromXmlFile()
             return Driver.just(data)
         }
         
         let allRecipes = input.loadTrigger.flatMapLatest { _ -> Driver<[Recipe]> in
-            let data = self.fetchRecipes()
-                .map { entity in
-                    return Recipe(id: entity.id ?? "", name: entity.name ?? "", desc: entity.desc ?? "", image: entity.image ?? Data(), category: entity.category ?? "")
-                }
+            let data = self.useCase.fetchRecipes(nil)
             return Driver.just(data)
         }
         
@@ -40,14 +37,11 @@ class ListRecipeViewModel: ViewModelType {
             return categories[index]
         })
             .flatMapLatest({ category -> Driver<[Recipe]> in
-                let data = self.fetchRecipes(category)
-                    .map { entity in
-                        return Recipe(id: entity.id ?? "", name: entity.name ?? "", desc: entity.desc ?? "", image: entity.image ?? Data(), category: entity.category ?? "")
-                    }
+                let data = self.useCase.fetchRecipes(category)
                 return .just(data)
             })
         
-        let selectedRecipe = input.selection.withLatestFrom(categories) { (indexPath, categories) -> (Recipe, [Category]) in
+        let selectedRecipe = input.selection.withLatestFrom(categories) { (indexPath, categories) -> (Recipe, [RecipeCategory]) in
             return (self.recipes[indexPath.row], categories)
         }.flatMapLatest { tuple -> Driver<RecipeState> in
             return self.navigator.goRecipeDetail(tuple.0, categories: tuple.1)
@@ -82,62 +76,9 @@ class ListRecipeViewModel: ViewModelType {
             .do(onNext: {
                 self.recipes = $0
             })
-                
-                return Output(recipes: recipes, categories: categories)
+        
+        return Output(recipes: recipes, categories: categories)
                 }
-    
-    private func fetchRecipes(_ category: Category? = nil) -> [RecipeEntity] {
-        
-        //1
-        guard let appDelegate =
-                UIApplication.shared.delegate as? AppDelegate else {
-                    return []
-                }
-        
-        let managedContext =
-        appDelegate.persistentContainer.viewContext
-        
-        //2
-        let fetchRequest =
-        NSFetchRequest<RecipeEntity>(entityName: "RecipeEntity")
-        
-        if let category = category, !category.id.isEmpty {
-            fetchRequest.predicate = NSPredicate(format: "category == %@", category.id)
-        }
-        
-        //3
-        do {
-            let recipes = try managedContext.fetch(fetchRequest)
-            
-            return recipes
-        } catch let error as NSError {
-            print("Could not fetch. \(error), \(error.userInfo)")
-            return []
-        }
-    }
-    
-    private func fetchCategoriesFromXmlFile() -> [Category] {
-        guard let xmlPath = Bundle.main.path(forResource: "recipetypes", ofType: "xml"),
-              let data = try? Data(contentsOf: URL(fileURLWithPath: xmlPath))
-        else { return [] }
-        
-        do {
-            let xmlDoc = try AEXMLDocument(xml: data)
-            let elements = xmlDoc.root.children.map({ $0.children })
-            let dicts = elements.map({
-                return Dictionary(uniqueKeysWithValues: $0.lazy.map { ($0.name, $0.string) })
-            })
-            
-            let categories = dicts.map({
-                return Category(dict: $0)
-            })
-            
-            return categories
-        } catch let error {
-            print(error.localizedDescription)
-            return []
-        }
-    }
 }
 
 extension ListRecipeViewModel {
@@ -151,7 +92,7 @@ extension ListRecipeViewModel {
     struct Output {
         let recipes: Driver<[Recipe]>
 //        let selectedRecipe: Driver<Recipe>
-        let categories: Driver<[Category]>
+        let categories: Driver<[RecipeCategory]>
 //        let createRecipe: Driver<Void>
     }
 }

@@ -21,5 +21,9 @@ extension RecipeEntity {
     @NSManaged public var image: Data?
     @NSManaged public var name: String?
     @NSManaged public var category: String?
+    
+    public convenience init() {
+        self.init()
+    }
 
 }

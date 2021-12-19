@@ -20,8 +20,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window = UIWindow(frame: UIScreen.main.bounds)
         
         let navigation = BaseNavigationController()
-        let navigator = ListRecipeNavigator(navigation: navigation)
-        let controller = ListRecipeViewController(viewModel: ListRecipeViewModel(navigator: navigator))
+        let navigator = DefaultListRecipeNavigator(navigation: navigation)
+        let useCase = DefaultListRecipeUseCase(persistentContainer: NSPersistentContainer(name: "RecipeApp"))
+        let controller = ListRecipeViewController(viewModel: ListRecipeViewModel(navigator: navigator, useCase: useCase))
         navigation.viewControllers = [controller]
         window?.rootViewController = navigation
         window?.makeKeyAndVisible()

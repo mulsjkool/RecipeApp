@@ -12,9 +12,9 @@ import CoreData
 class RecipeDetailViewModel: ViewModelType {
     
     private let recipe: Recipe
-    let categories: [Category]
+    let categories: [RecipeCategory]
     
-    init(recipe: Recipe, categories: [Category]) {
+    init(recipe: Recipe, categories: [RecipeCategory]) {
         self.recipe = recipe
         self.categories = categories
     }
@@ -25,7 +25,7 @@ class RecipeDetailViewModel: ViewModelType {
             return Driver.just(self.categories)
         }
         
-        let defaultCategory = input.loadTrigger.flatMapLatest { _ -> Driver<Category> in
+        let defaultCategory = input.loadTrigger.flatMapLatest { _ -> Driver<RecipeCategory> in
             if let category = self.categories.first(where: { self.recipe.category == $0.id }) {
                 return Driver.just(category)
             } else {
@@ -211,7 +211,7 @@ extension RecipeDetailViewModel {
         let recipe: Driver<Recipe>
         let save: Driver<Recipe>
         let delete: Driver<Recipe>
-        let categories: Driver<[Category]>
-        let selectedCategory: Driver<Category>
+        let categories: Driver<[RecipeCategory]>
+        let selectedCategory: Driver<RecipeCategory>
     }
 }

@@ -47,9 +47,12 @@
                                 <constraint firstAttribute="height" constant="40" id="McL-xY-bzE"/>
                             </constraints>
                             <state key="normal" title="Button"/>
-                            <buttonConfiguration key="configuration" style="plain" title="Select"/>
+                            <buttonConfiguration key="configuration" style="plain" title="Select">
+                                <fontDescription key="titleFontDescription" type="system" weight="semibold" pointSize="18"/>
+                            </buttonConfiguration>
                         </button>
                     </subviews>
+                    <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                 </stackView>
             </subviews>
             <viewLayoutGuide key="safeArea" id="fnl-2z-Ty3"/>

@@ -15,7 +15,12 @@ enum RecipeState {
     case delete(Recipe)
 }
 
-class ListRecipeNavigator {
+protocol ListRecipeNavigator {
+    func goRecipeDetail(_ recipe: Recipe, categories: [RecipeCategory]) -> Driver<RecipeState>
+    func goCreateRecipe(categories: [RecipeCategory]) -> Driver<Recipe>
+}
+
+class DefaultListRecipeNavigator: ListRecipeNavigator {
     
     private let navigation: UINavigationController
     
@@ -23,7 +28,7 @@ class ListRecipeNavigator {
         self.navigation = navigation
     }
     
-    func goRecipeDetail(_ recipe: Recipe, categories: [Category]) -> Driver<RecipeState> {
+    func goRecipeDetail(_ recipe: Recipe, categories: [RecipeCategory]) -> Driver<RecipeState> {
         
         let publishSubject = PublishSubject<RecipeState>()
         let viewModel = RecipeDetailViewModel(recipe: recipe, categories: categories)
@@ -44,7 +49,7 @@ class ListRecipeNavigator {
         return publishSubject.asDriverOnErrorJustComplete()
     }
     
-    func goCreateRecipe(categories: [Category]) -> Driver<Recipe> {
+    func goCreateRecipe(categories: [RecipeCategory]) -> Driver<Recipe> {
         
         let publishSubject = PublishSubject<Recipe>()
         let viewModel = RecipeDetailViewModel(recipe: Recipe(id: "", name: "", desc: "", image: Data()), categories: categories)

@@ -7,15 +7,15 @@
 
 import Foundation
 
-class Recipe: Equatable {
+public class Recipe: Equatable {
     
-    let id: String
-    var name: String
-    var desc: String
-    var image: Data
-    var category: String
+    public let id: String
+    public var name: String
+    public var desc: String
+    public var image: Data
+    public var category: String
     
-    init(id: String, name: String, desc: String, image: Data, category: String = "") {
+    public init(id: String, name: String, desc: String, image: Data, category: String = "") {
         self.id = id
         self.name = name
         self.desc = desc
@@ -23,7 +23,7 @@ class Recipe: Equatable {
         self.category = category
     }
         
-    static func == (lhs: Recipe, rhs: Recipe) -> Bool {
+    public static func == (lhs: Recipe, rhs: Recipe) -> Bool {
         return lhs.id == rhs.id
     }
 }
